@@ -31,6 +31,9 @@ class ICUtils():
 
 
 
+class Estadistica():
+    p_rondas = list()
+    puntos = None
 
 
 
@@ -125,8 +128,6 @@ class Mazo():
             sub_mazo_impares.clear()
         self.__cartas = mazo_auxiliar
     
-
-
     def mazo(self):
         return self.__cartas
 
@@ -155,6 +156,7 @@ class Truco():
         self.__mazo = mazo
         self.__jugadores = list()
         self.__cartas_mesa = list()
+
 
     def obtenerPuntaje(self,carta_agente: str):
         if "12" in carta_agente:
@@ -224,31 +226,41 @@ class Truco():
     def listarCartas(self):
         print (self.__mazo)
 
+    def computarRonda(self, ag0, ag1):
+        cartas_ronda = self.__cartas_mesa[-2:]
+        p_ag0 = self.obtenerPuntaje( cartas_ronda[0] )
+        p_ag1 = self.obtenerPuntaje( cartas_ronda[1] )
+        if p_ag0 == p_ag1:
+            ag0.asignarResultado("E")
+            ag1.asignarResultado("E")
+        elif p_ag0 > p_ag1:
+            ag0.asignarResultado("V")
+            ag1.asignarResultado("D")
+        else:
+            ag0.asignarResultado("D")
+            ag1.asignarResultado("V")
+        
+
     def jugarSimple(self):
         n_jugadores = len(self.__jugadores)
         while True:
-
+            self.__jugadores[1].mirarMesa(tuple(self.__cartas_mesa))
             carta_jugada = self.__jugadores[1].tirarCarta()
             carta_jugada.por = self.__jugadores[1].nombre
 
-            print(f"Carta sobre la mesa: {carta_jugada}")
+            print(f"Carta sobre la mesa: {carta_jugada}, jugado por {carta_jugada.por}")
             self.ponerCartaMesa(carta_jugada)
 
-
-            self.__jugadores[0].analizarCarta()
+            self.__jugadores[0].mirarMesa(tuple(self.__cartas_mesa))
             carta_jugada = self.__jugadores[0].tirarCarta()
             carta_jugada.por = self.__jugadores[0].nombre
-            print(f"Carta sobre la mesa: {carta_jugada}")
+            print(f"Carta sobre la mesa: {carta_jugada}, jugado por {carta_jugada.por}")
             self.ponerCartaMesa(carta_jugada)
 
+            self.computarJuego(self.__jugadores[0], self.__jugadores[0])
+
             
-            if self.__jugadores[0].puntos >=15 or self.__jugadores[1].puntos >=15 :
-                break
         
-
-
-
-
 
 
 class Agente():
@@ -260,7 +272,9 @@ class Agente():
             self.__flor = flor
         self.__nombre = nombre
         self.__mis_cartas = list()
-
+        self.__mi_proxima_jugada = 0
+        self.__resultados = list()
+        
     @property
     def nombre(self):
         return self.__nombre
@@ -288,13 +302,32 @@ class Agente():
         if self.__mensajes:
             print (f"Mis cartas ordenadas: {self.__mis_cartas}")
             
-    @property
-    def puntos(self):
-        return self.__puntos
+    def asignarResultado(self, res):
+        self.__resultados.append(res)
 
-    @puntos.setter
-    def puntos(self, _puntos):
-        self.__puntos += _puntos
+    def mirarMesa(self, cartas_mesa):
+        n_cartas = len(cartas_mesa)
+        carta = None
+        if n_cartas == 0:
+            self.__mi_proxima_jugada=1
+        elif n_cartas == 1:
+            pass
+
+
+    #def queInmediatoSuperior(self,):
+
+
+    def tirarCarta(self):
+        if self.__mi_proxima_jugada != -1:
+            if len(self.__mis_cartas) == 3:
+                carta = self.__mis_cartas[self.__mi_proxima_jugada]
+                self.__mis_cartas.remove(self.__mis_cartas[self.__mi_proxima_jugada])
+                self.__mi_proxima_jugada = -1
+        else:
+            if self.__mensajes:
+                print("No es mi turno para jugar")
+            carta = None
+        return carta
 
     
         
@@ -322,6 +355,8 @@ a2 = Agente("A2")
 truco.sumarJugador( a1 )
 truco.sumarJugador( a2 )
 
+# se considera solo dos jugadores
+# se toma el primer jugador que se agrego al juego como el jugador pie
 truco.repartirCartas()
 
 #truco.jugar()
