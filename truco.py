@@ -7,11 +7,9 @@ version: 0.2
 @author: sd
 """
 
-from functools import total_ordering
 import random
 import os
-
-from scipy import rand
+#from scipy import rand
 
 
 def clear():
@@ -48,9 +46,9 @@ class Mazo():
             "1-copa", "2-copa", "3-copa", "4-copa", "5-copa", 
             "6-copa",  "7-copa", "10-copa", "11-copa", "12-copa",
             "1-basto", "2-basto", "3-basto", "4-basto", "5-basto", 
-            "6-basto",  "7-basto", "8-basto", "11-basto", "12-basto",
-            "1-esapda", "2-esapda", "3-esapda", "4-esapda", "5-esapda", 
-            "6-esapda",  "7-esapda", "10-esapda", "11-esapda", "12-esapda"
+            "6-basto",  "7-basto", "10-basto", "11-basto", "12-basto",
+            "1-espada", "2-espada", "3-espada", "4-espada", "5-espada", 
+            "6-espada",  "7-espada", "10-espada", "11-espada", "12-espada"
         ]
         self.mezclar_veces = 2
     @property
@@ -158,34 +156,31 @@ class Truco():
 
     @classmethod
     def obtenerPuntaje(self, carta_agente: str):
-        print("-->  def obtenerPuntaje(carta_agente: str):")
-        #print(">>>",carta_agente)
         salida = None
         entrada = carta_agente.split("-")
-        if len(entrada) != 2:
-            print ("La carta de entrada esta mal formateado")
-            print("<--  def obtenerPuntaje(carta_agente: str):")
-            return None
-        #print ( entrada )
-        puntos, tipo = entrada
-        tipo = tipo.lower()
-        if 1==int(puntos):
-            if tipo != "espada" and tipo!="basto":
-                salida = 8
-            salida = (13,14)[tipo == "espada"]
-        elif 7==int(puntos):
-            if tipo!="espada" and tipo!="oro":
-                salida = 4
-            salida = (11,12)[tipo=="espada"]
-        if int(puntos)>1 and int(puntos)<13:
-            salida = (0,0,9,10,1,2,3,0,0,0,5,6,7,0)[int(puntos)]
-        else:
-            print ("No se puede calcular el valor de la carta enviada")
-        
-        print("<--  def obtenerPuntaje(carta_agente: str):")
+        if len(entrada) == 2:
+            puntos, tipo = entrada
+            tipo = tipo.lower()
+            if 1==int(puntos):
+                if tipo == "copa" or tipo== "oro":
+                    salida = 8
+                elif tipo == "espada" or tipo == "basto":
+                    salida = (13,14)[tipo == "espada"]
+            elif 7==int(puntos):
+                if tipo=="copa" or tipo=="basto":
+                    salida = 4
+                elif tipo=="espada" or tipo == "oro":
+                    salida = (11,12)[tipo=="espada"]
+            if tipo in ("oro","basto","copa","espada"):
+                if int(puntos)>1 and int(puntos)<13:
+                    salida = (0,0,9,10,1,2,3,0,0,0,5,6,7)[int(puntos)]
+
+        if salida==None:
+            raise ValueError('Se produjo un error, al obtener el puntaje de la carta')
         return salida
 
-    def aslkjflasjf(self,carta_agente):
+    @classmethod
+    def obtenerPuntaje2(self,carta_agente):
         if "12" in carta_agente:
             return 7
         elif "11" in carta_agente:
@@ -217,6 +212,7 @@ class Truco():
             else:
                 return 4
         else:
+            print("NO PUDO CALCULAR")
             return -10
     
     def mezclar(self, veces=None):
@@ -256,8 +252,8 @@ class Truco():
     def computarRonda(self, ag0, ag1):
         ganador = None
         cartas_ronda = self.__cartas_mesa[-2:]
-        print("Cantidad de cartas sobre la mesa: ",len(self.__cartas_mesa))
-        print("Cartas de la ronda: ",cartas_ronda)
+        #print("Cantidad de cartas sobre la mesa: ",len(self.__cartas_mesa))
+        #print("Cartas de la ronda: ",cartas_ronda)
         c = cartas_ronda[0]
         p_ag0 = self.obtenerPuntaje( c )
         c = cartas_ronda[1]
@@ -279,7 +275,13 @@ class Truco():
     def jugarSimple(self):
         n_jugadores = len(self.__jugadores)
         for n in range(3):
+            if n == 0:
+                print("Cartas mano:",self.__jugadores[1].misCartas)
+                print("Envido del mano: ",self.__jugadores[1].calcularEnvido())
 
+                print("Cartas mano:",self.__jugadores[0].misCartas)
+                print("Envido del pie: ",self.__jugadores[0].calcularEnvido())
+            
             self.__jugadores[1].mirarMesa(tuple(self.__cartas_mesa))
             carta_jugada = self.__jugadores[1].tirarCarta()
             #carta_jugada.por = self.__jugadores[1].nombre
@@ -304,13 +306,13 @@ class Truco():
         print ("Resualtado de las 3 rondas:")
         self.__jugadores[0].mostarResultados()
         self.__jugadores[1].mostarResultados()
-        print("Cartas:")
-        self.__cartas_mesa
+        #print("Cartas sobre la mesa:",self.__cartas_mesa)
+        
         
 
 
 class Agente():
-    def __init__(self, nombre, envio=None, flor=None, mensajes=True) -> None:
+    def __init__(self, nombre, envio=None, flor=None, mensajes=False) -> None:
         self.__mensajes = mensajes
         if envio != None:
             self.__envio = envio
@@ -355,38 +357,69 @@ class Agente():
         if self.__mensajes:
             print (f"Mis cartas ordenadas: {self.__mis_cartas}")
     
+    def mayorDeTres(self, nro0, nro1, nro2) -> int:
+        mayor = nro0
+        if nro0 > nro1:
+                if nro0 > nro2:
+                    mayor = nro0
+                else:
+                    mayor = nro2
+        elif nro1 > nro2:
+                mayor = nro1
+        else:
+            mayor = nro2
+        
+        return mayor
+
     def calcularEnvido(self) -> int:
-        p0 = p1 = p2 = puntaje = None
-        #dic = {10:0,11:0,12:0,1:1,2:2,3:3,4:4,5:5,6:6,7:7,}
+        p0 = p1 = p2 = -1
+        puntaje1 = puntaje2 = None
+        
         valenCero = (10,11,12)
+
         nro0, palo0 = self.__mis_cartas[0].split("-")
         nro1, palo1 = self.__mis_cartas[1].split("-")
         nro2, palo2 = self.__mis_cartas[2].split("-")
         
+        nro0 = int(nro0)
+        nro1 = int(nro1)
+        nro2 = int(nro2)
+
         # debe devolverse el mayor puntaje de envido que haya
-        for n in range(3):
-            pass
+        # los siguientes if se encargan de calcular el puntaje
+        # segun los palos que conincidan
         if palo0 == palo1:
             p0 = 20
             if nro0 not in valenCero:
                 p0 += nro0
             if nro1 not in valenCero:
                 p0 += nro1
-
+        
         if palo0 == palo2:
             p1 = 20
             if nro0 not in valenCero:
                 p1 += nro0
-            if nro1 not in valenCero:
-                p1 += nro1   
+            if nro2 not in valenCero:
+                p1 += nro2
+        
         if palo1 == palo2:
             p2 = 20
-            if nro0 not in valenCero:
-                p2 += nro0
             if nro1 not in valenCero:
                 p2 += nro1
-        #else:
-            #puntaje = mayor(nro0,nro1,nro2)
+            if nro2 not in valenCero:
+                p2 += nro2
+        
+        if p0 > 0 or p1 > 0 or p2 > 0:
+            puntaje = self.mayorDeTres(p0,p1,p2)
+        else:
+            if nro0 in valenCero:
+                nro0 = 0
+            if nro1 in valenCero:
+                nro1 = 0
+            if nro2 in valenCero:
+                nro2 = 0
+            
+            puntaje = self.mayorDeTres(nro0,nro1,nro2)
 
         return puntaje
 
@@ -425,8 +458,8 @@ class Agente():
         
         # con esta funcion el agente busca elegir la carta
         # inmediata superior a la del contrincante
-        print("--> def inmediatoSuperior(self,ultimaCarta:str):")
-        print(ultimaCarta)
+        #print("--> def inmediatoSuperior(self,ultimaCarta:str):")
+        #print(ultimaCarta)
         #valorUltima = Truco.obtenerPuntaje(ultimaCarta)
         valorUltima = Truco.obtenerPuntaje(ultimaCarta)
         l = len(self.__mis_cartas)
@@ -459,7 +492,7 @@ clear()
 mazo_cartas = Mazo()
 truco = Truco(mazo_cartas)
 
-truco.listarCartas()
+#truco.listarCartas()
 
 # se puede agregar aqui
 # truco.sumarJugador( Agente("A1") )
@@ -469,7 +502,7 @@ truco.cortarMazo()
 truco.mezclar(5)
 truco.cortarMazo()
 
-truco.listarCartas()
+#truco.listarCartas()
 
 a1 = Agente("Galileo")
 a2 = Agente("Copernico")
