@@ -13,10 +13,7 @@ import os
 
 
 def clear():
-    if os.name == 'nt':
-        _ = os.system('cls')
-    else:
-        _ = os.system('clear')
+    _ = os.system(('clear','cls')[os.name == 'nt'])
 
 
 class ICUtils():
@@ -273,7 +270,7 @@ class Truco():
         
 
     def jugarSimple(self):
-        n_jugadores = len(self.__jugadores)
+        #n_jugadores = len(self.__jugadores)
         for n in range(3):
             if n == 0:
                 print("Cartas mano:",self.__jugadores[1].misCartas)
@@ -373,7 +370,7 @@ class Agente():
 
     def calcularEnvido(self) -> int:
         p0 = p1 = p2 = -1
-        puntaje1 = puntaje2 = None
+        #puntaje1 = puntaje2 = None
         
         valenCero = (10,11,12)
 
@@ -444,7 +441,7 @@ class Agente():
                 # si perdio o empato anteriormente trata de ganar la proxima
                 if ("D" in self.__resultados) or ("E" in self.__resultados): 
                     indiceCarta = -1 # selecciona la mas alta
-                # de otro modo juega la del medio
+                # de otro modo juega la mas chica
                 else:
                     indiceCarta = 0
         # si es el segundo en tirar en esa ronda, selecciona la inmediata superior
@@ -458,9 +455,7 @@ class Agente():
         
         # con esta funcion el agente busca elegir la carta
         # inmediata superior a la del contrincante
-        #print("--> def inmediatoSuperior(self,ultimaCarta:str):")
-        #print(ultimaCarta)
-        #valorUltima = Truco.obtenerPuntaje(ultimaCarta)
+        
         valorUltima = Truco.obtenerPuntaje(ultimaCarta)
         l = len(self.__mis_cartas)
 
@@ -491,12 +486,6 @@ clear()
 
 mazo_cartas = Mazo()
 truco = Truco(mazo_cartas)
-
-#truco.listarCartas()
-
-# se puede agregar aqui
-# truco.sumarJugador( Agente("A1") )
-# truco.sumarJugador( Agente("A2") )
 
 truco.cortarMazo()
 truco.mezclar(5)
