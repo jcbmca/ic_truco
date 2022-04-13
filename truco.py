@@ -9,29 +9,9 @@ version: 0.2
 
 import random
 import os
-#from scipy import rand
-
 
 def clear():
     _ = os.system(('clear','cls')[os.name == 'nt'])
-
-
-class ICUtils():
-    def __init__(self) -> None:
-        pass
-
-    def randomFromList(self, _list : list):
-        index = random.randrange(0, len(_list), 1)
-        return _list[index]
-
-
-
-class Estadistica():
-    p_rondas = list()
-    puntos = None
-
-
-
 
 class Mazo():
     def __init__(self) -> None:
@@ -76,7 +56,6 @@ class Mazo():
         self.__cartas = corte2
         self.__cartas += corte1
         return self.__cartas 
-
     
     # si el parametro _veces es None osea no se asigna toma el valor por defecto
     # si se asigna un valor 
@@ -141,7 +120,6 @@ class Mazo():
         carta = self.__cartas[-1]
         self.__cartas = self.__cartas[:-1]
         return carta
-    
 
 class Truco():
     # tablero
@@ -236,8 +214,7 @@ class Truco():
             print("Debe asignar los jugadores")
 
     def sumarJugador(self, jugador):
-        self.__jugadores.append(jugador)
-        
+        self.__jugadores.append(jugador)     
 
     def listarJugadores(self):
         for j in self.__jugadores:
@@ -266,8 +243,7 @@ class Truco():
             ganador = 1
             ag0.asignarResultado("D")
             ag1.asignarResultado("V")
-        return ganador
-        
+        return ganador     
 
     def jugarSimple(self):
         #n_jugadores = len(self.__jugadores)
@@ -303,10 +279,6 @@ class Truco():
         print ("Resualtado de las 3 rondas:")
         self.__jugadores[0].mostarResultados()
         self.__jugadores[1].mostarResultados()
-        #print("Cartas sobre la mesa:",self.__cartas_mesa)
-        
-        
-
 
 class Agente():
     def __init__(self, nombre, envio=None, flor=None, mensajes=False) -> None:
