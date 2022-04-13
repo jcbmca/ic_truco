@@ -159,6 +159,7 @@ class Truco():
 
 
     def obtenerPuntaje(self,carta_agente: str):
+
         if "12" in carta_agente:
             return 7
         elif "11" in carta_agente:
@@ -227,39 +228,52 @@ class Truco():
         print (self.__mazo)
 
     def computarRonda(self, ag0, ag1):
+        ganador = None
         cartas_ronda = self.__cartas_mesa[-2:]
-        p_ag0 = self.obtenerPuntaje( cartas_ronda[0] )
-        p_ag1 = self.obtenerPuntaje( cartas_ronda[1] )
+        print("Cantidad de cartas sobre la mesa: ",len(self.__cartas_mesa))
+        c = cartas_ronda[0]
+        p_ag0 = self.obtenerPuntaje( c )
+        c = cartas_ronda[1]
+        p_ag1 = self.obtenerPuntaje( c )
         if p_ag0 == p_ag1:
             ag0.asignarResultado("E")
             ag1.asignarResultado("E")
         elif p_ag0 > p_ag1:
+            ganador = 0
             ag0.asignarResultado("V")
             ag1.asignarResultado("D")
         else:
+            ganador = 1
             ag0.asignarResultado("D")
             ag1.asignarResultado("V")
+        return ganador
         
 
     def jugarSimple(self):
         n_jugadores = len(self.__jugadores)
-        while True:
+        for n in range(3):
             self.__jugadores[1].mirarMesa(tuple(self.__cartas_mesa))
             carta_jugada = self.__jugadores[1].tirarCarta()
-            carta_jugada.por = self.__jugadores[1].nombre
+            #carta_jugada.por = self.__jugadores[1].nombre
 
-            print(f"Carta sobre la mesa: {carta_jugada}, jugado por {carta_jugada.por}")
+            #print(f"Carta sobre la mesa: {carta_jugada}, jugado por {carta_jugada.por}")
             self.ponerCartaMesa(carta_jugada)
 
             self.__jugadores[0].mirarMesa(tuple(self.__cartas_mesa))
             carta_jugada = self.__jugadores[0].tirarCarta()
-            carta_jugada.por = self.__jugadores[0].nombre
-            print(f"Carta sobre la mesa: {carta_jugada}, jugado por {carta_jugada.por}")
+            #carta_jugada.por = self.__jugadores[0].nombre
+            #print(f"Carta sobre la mesa: {carta_jugada}, jugado por {carta_jugada.por}")
             self.ponerCartaMesa(carta_jugada)
 
-            self.computarJuego(self.__jugadores[0], self.__jugadores[0])
+            ganador = self.computarRonda(self.__jugadores[0], self.__jugadores[1])
+            if ganador == 0:
+                jtmp = self.__jugadores[0]
+                self.__jugadores[0] = self.__jugadores[1]
+                self.__jugadores[1] = jtmp
 
-            
+        print ("Resualtado de las rondas:")
+        self.__jugadores[0].mostarResultados()
+        self.__jugadores[1].mostarResultados()
         
 
 
@@ -291,10 +305,13 @@ class Agente():
     def ordenarMisCartas(self):
         if self.__mensajes:
             print (f"Mis cartas desordenadas: {self.__mis_cartas}")
+        #tope = len
         for j in range(2):
             for i in range(2):
-                pc1 = Truco.obtenerPuntaje(self.__mis_cartas[i])
-                pc2 = Truco.obtenerPuntaje(self.__mis_cartas[i+1])
+                c = self.__mis_cartas[i]
+                pc1 = Truco.obtenerPuntaje(c)
+                c = self.__mis_cartas[i+1]
+                pc2 = Truco.obtenerPuntaje(c)
                 if pc1>pc2:
                     ctmp = self.__mis_cartas[i]
                     self.__mis_cartas[i] = self.__mis_cartas[i+1]
@@ -305,13 +322,16 @@ class Agente():
     def asignarResultado(self, res):
         self.__resultados.append(res)
 
+    def mostarResultados(self):
+        print(f"El resultado de: {self.nombre} es: {self.__resultados}" )
+
     def mirarMesa(self, cartas_mesa):
         n_cartas = len(cartas_mesa)
         carta = None
         if n_cartas == 0:
             self.__mi_proxima_jugada=1
-        elif n_cartas == 1:
-            pass
+        elif n_cartas >= 1:
+            self.__mi_proxima_jugada = 0
 
 
     #def queInmediatoSuperior(self,):
@@ -319,10 +339,11 @@ class Agente():
 
     def tirarCarta(self):
         if self.__mi_proxima_jugada != -1:
-            if len(self.__mis_cartas) == 3:
+            #if len(self.__mis_cartas) == 3:
+            if True:
                 carta = self.__mis_cartas[self.__mi_proxima_jugada]
                 self.__mis_cartas.remove(self.__mis_cartas[self.__mi_proxima_jugada])
-                self.__mi_proxima_jugada = -1
+                #self.__mi_proxima_jugada = -1
         else:
             if self.__mensajes:
                 print("No es mi turno para jugar")
@@ -359,7 +380,7 @@ truco.sumarJugador( a2 )
 # se toma el primer jugador que se agrego al juego como el jugador pie
 truco.repartirCartas()
 
-#truco.jugar()
+truco.jugarSimple()
 
 
 
