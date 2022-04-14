@@ -10,9 +10,6 @@ version: 0.2
 import random
 import os
 import sys
-import time
-
-from scipy import rand
 
 def clear():
     _ = os.system(('clear','cls')[os.name == 'nt'])
@@ -287,6 +284,8 @@ class Truco():
         while True:
 
             puntosEnJuego = 1 # la cantidad de puntos apostados para la mano
+            envidoCantado = False
+
             self.__jugadores[1].soy_mano = True # definimos que el que esta en la posicion 1 es mano
             self.__jugadores[0].soy_mano = False
 
@@ -294,18 +293,49 @@ class Truco():
             self.repartirCartas()
 
             for n in range(3):
-                #if n == -1:
-                #    print("Cartas mano:",self.__jugadores[1].misCartas)
-                #    print("Envido del mano: ",self.__jugadores[1].calcularEnvido())
-
-                #    print("Cartas mano:",self.__jugadores[0].misCartas)
-                #    print("Envido del pie: ",self.__jugadores[0].calcularEnvido())
                 
+                if (n == 0) and (self.__jugadores[1].desafiarAEnvido() ):
+                    envidoCantado = True
+                    
+                    #print(f"{self.__jugadores[1].nombre} canto ENVIDO con {self.__jugadores[1].decirPuntajeEnvido()} puntos")
+                    
+                    if self.__jugadores[0].aceptarRetoEnvido():
+                        
+                        #print(f"{self.__jugadores[0].nombre} acepto")
+                        
+                        if self.__jugadores[1].decirPuntajeEnvido() > self.__jugadores[0].decirPuntajeEnvido():
+                            #print(f"{self.__jugadores[1].nombre} gano")
+                            self.__jugadores[1].sumarPuntos(2) # gano el retador
+                        else:
+                            #print(f"{self.__jugadores[0].nombre} gano con {self.__jugadores[0].decirPuntajeEnvido()} puntos")
+                            self.__jugadores[0].sumarPuntos(2) # gano el retado
+                    else:
+                        #print(f"{self.__jugadores[0].nombre} rechazo")
+                        self.__jugadores[1].sumarPuntos(1) # el retado rechazo
+
                 self.__jugadores[1].mirarMesa(tuple(self.__cartas_mesa))
                 carta_jugada = self.__jugadores[1].tirarCarta()
                 self.ponerCartaMesa(carta_jugada)
                 
                 ############# turno del otro agente ###############
+                
+                if not envidoCantado and (n == 0) and (self.__jugadores[0].desafiarAEnvido() ):
+                    
+                    #print(f"{self.__jugadores[0].nombre} canto ENVIDO con {self.__jugadores[0].decirPuntajeEnvido()} puntos")
+                    
+                    if self.__jugadores[1].aceptarRetoEnvido():
+                        
+                        #print(f"{self.__jugadores[1].nombre} acepto")
+                        
+                        if self.__jugadores[0].decirPuntajeEnvido() > self.__jugadores[1].decirPuntajeEnvido():
+                            #print(f"{self.__jugadores[0].nombre} gano")
+                            self.__jugadores[0].sumarPuntos(2) # gano el retador
+                        else:
+                            #print(f"{self.__jugadores[1].nombre} gano  con {self.__jugadores[1].decirPuntajeEnvido()} puntos")
+                            self.__jugadores[1].sumarPuntos(2) # gano el retado
+                    else:
+                        #print(f"{self.__jugadores[1].nombre} rechazo")
+                        self.__jugadores[0].sumarPuntos(1) # el retado rechazo
 
                 self.__jugadores[0].mirarMesa(tuple(self.__cartas_mesa))
                 carta_jugada = self.__jugadores[0].tirarCarta()
@@ -317,10 +347,6 @@ class Truco():
                     jtmp = self.__jugadores[0]
                     self.__jugadores[0] = self.__jugadores[1]
                     self.__jugadores[1] = jtmp
-            
-            #print ("Resualtado de las 3 rondas:")
-            #self.__jugadores[0].mostarResultados()
-            #self.__jugadores[1].mostarResultados()
 
             # ASIGNAR PUNTO/S AL GANADOR
             indiceG = self.evaluarGanador(self.__jugadores[0].devResult(), self.__jugadores[1].devResult()) - 1
@@ -361,7 +387,10 @@ class Agente():
         self.__nombre = nombre
         self.__envido = envido
         self.__puntajeEnvido = None
+        self.__UMBRAL_ENVIDO = 25
+
         self.__flor = flor
+
         self.__mensajes = mensajes
 
         self.soy_mano = False
@@ -375,6 +404,10 @@ class Agente():
     @property
     def nombre(self):
         return self.__nombre
+    
+    @property
+    def envido(self):
+        return self.__envido
 
     @nombre.setter
     def nombre(self, _nombre):
@@ -478,6 +511,21 @@ class Agente():
         #return puntaje
         self.__puntajeEnvido = puntaje
 
+    def aceptarRetoEnvido(self):
+        if self.__puntajeEnvido > self.__UMBRAL_ENVIDO:
+            return 1 # QUIERO!
+        else:
+            return 0 # no quiero
+
+    def desafiarAEnvido(self):
+        if self.__envido and self.__puntajeEnvido > self.__UMBRAL_ENVIDO:
+            return 1 # ENVIDO!
+        else:
+            return 0
+
+    def decirPuntajeEnvido(self):
+        return self.__puntajeEnvido
+
     def asignarResultado(self, res):
         self.__resultados.append(res)
 
@@ -488,10 +536,16 @@ class Agente():
         print(f"El resultado de: {self.nombre} es: {self.__resultados}" )
 
     def mirarMesa(self, cartasMesa: tuple):
+
+        '''En este metodo es donde se introduce el conocimiento que 
+        tiene el agente acerca del juego y en base a ello
+        selecciona la carta (su indice) para jugar. Puede expandirse o incorporarse
+        un metodo distinto. En el caso mas basico usa Reflejo Simple con reglas de
+        tipo if-else'''
+
         n_cartas = len(cartasMesa)
         indiceCarta = 0
-        # propuesta: en lugar de comparar si es igual a cero, se puede
-        # comprobar si es par: si es par se inicio nueva ronda y el agente
+        # si es par se inicio nueva ronda y el agente
         # actual es quien la inicia
         if n_cartas%2 == 0:
             # si es la primera ronda de las tres:
@@ -562,8 +616,8 @@ truco = Truco(mazo_cartas)
 
 #truco.listarCartas()
 
-a1 = Agente("Galileo")
-a2 = Agente("Copernico")
+a1 = Agente("Galileo",envido=False)
+a2 = Agente("Copernico",envido=True)
 truco.sumarJugador( a1 )
 truco.sumarJugador( a2 )
 
@@ -574,7 +628,7 @@ truco.sumarJugador( a2 )
 # cantidad de partidas a jugar:
 #print(sys.argv[1])
 #N = int(sys.argv[1]) # en caso de desear ingresar el parametro por terminal
-N = 500
+N = 200
 if N>300:
     N=300
 
@@ -586,16 +640,8 @@ for n in range(N):
     if ganador == a1.nombre:
         cont_a1 += 1
 
-#for i in range(M):
-#    for n in range(N):
-#        print(n)
-#        ganador = truco.jugarSimple()
-#        if ganador == a1.nombre:
-#            cont_a1 += 1
 cont_a2 = N - cont_a1
 
 print("Resultados para N =",N)
 print("Victorias de {0}: {1} ( {2}% )".format( a1.nombre, cont_a1, 100*cont_a1/N ))
 print("Victorias de {0}: {1} ( {2}% )".format( a2.nombre, cont_a2, 100*cont_a2/N ))
-
-#truco.listarJugadores()
