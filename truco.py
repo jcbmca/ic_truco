@@ -10,6 +10,7 @@ version: 0.2
 import random
 import os
 import sys
+import time
 
 def clear():
     _ = os.system(('clear','cls')[os.name == 'nt'])
@@ -82,7 +83,7 @@ class Mazo():
 
     def mezclarSegunIndice(self, _veces=None):
         n_cartas = len(self.__cartas)
-        #print(n_cartas)
+        
         _v = self.mezclar_veces
         if _veces:
             _v = _veces
@@ -238,8 +239,7 @@ class Truco():
     def computarRonda(self, ag0, ag1):
         ganador = None
         cartas_ronda = self.__cartas_mesa[-2:]
-        #print("Cantidad de cartas sobre la mesa: ",len(self.__cartas_mesa))
-        #print("Cartas de la ronda: ",cartas_ronda)
+
         c = cartas_ronda[0]
         p_ag0 = self.obtenerPuntaje( c )
         c = cartas_ronda[1]
@@ -271,15 +271,13 @@ class Truco():
                 return 0
             else:
                 print("ERROR EN LONGITUDES DE RESULTADOS:")
-                #print("len(l1): ",len(l1))  
-                #print("len(l2): ",len(l2))
-                print("l1: ",l1)
-                print("l2: ",l2)
         else:
             print("Los registros ingresados no pertesen al tipo lista")
             return None
 
     def jugarSimple(self):
+
+        '''Puede mejorarse mucho aun'''
 
         while True:
 
@@ -294,23 +292,17 @@ class Truco():
 
             for n in range(3):
                 
+                ############# turno del agente mano o del que gano con su carta anterior ###############
+
                 if (n == 0) and (self.__jugadores[1].desafiarAEnvido() ):
                     envidoCantado = True
-                    
-                    #print(f"{self.__jugadores[1].nombre} canto ENVIDO con {self.__jugadores[1].decirPuntajeEnvido()} puntos")
-                    
+
                     if self.__jugadores[0].aceptarRetoEnvido():
-                        
-                        #print(f"{self.__jugadores[0].nombre} acepto")
-                        
                         if self.__jugadores[1].decirPuntajeEnvido() > self.__jugadores[0].decirPuntajeEnvido():
-                            #print(f"{self.__jugadores[1].nombre} gano")
                             self.__jugadores[1].sumarPuntos(2) # gano el retador
                         else:
-                            #print(f"{self.__jugadores[0].nombre} gano con {self.__jugadores[0].decirPuntajeEnvido()} puntos")
                             self.__jugadores[0].sumarPuntos(2) # gano el retado
                     else:
-                        #print(f"{self.__jugadores[0].nombre} rechazo")
                         self.__jugadores[1].sumarPuntos(1) # el retado rechazo
 
                 self.__jugadores[1].mirarMesa(tuple(self.__cartas_mesa))
@@ -321,20 +313,13 @@ class Truco():
                 
                 if not envidoCantado and (n == 0) and (self.__jugadores[0].desafiarAEnvido() ):
                     
-                    #print(f"{self.__jugadores[0].nombre} canto ENVIDO con {self.__jugadores[0].decirPuntajeEnvido()} puntos")
-                    
                     if self.__jugadores[1].aceptarRetoEnvido():
-                        
-                        #print(f"{self.__jugadores[1].nombre} acepto")
-                        
+                      
                         if self.__jugadores[0].decirPuntajeEnvido() > self.__jugadores[1].decirPuntajeEnvido():
-                            #print(f"{self.__jugadores[0].nombre} gano")
                             self.__jugadores[0].sumarPuntos(2) # gano el retador
                         else:
-                            #print(f"{self.__jugadores[1].nombre} gano  con {self.__jugadores[1].decirPuntajeEnvido()} puntos")
                             self.__jugadores[1].sumarPuntos(2) # gano el retado
                     else:
-                        #print(f"{self.__jugadores[1].nombre} rechazo")
                         self.__jugadores[0].sumarPuntos(1) # el retado rechazo
 
                 self.__jugadores[0].mirarMesa(tuple(self.__cartas_mesa))
@@ -389,7 +374,7 @@ class Agente():
         self.__puntajeEnvido = None
         self.__UMBRAL_ENVIDO = 25
 
-        self.__flor = flor
+        self.__flor = flor # no se implemento
 
         self.__mensajes = mensajes
 
@@ -431,7 +416,7 @@ class Agente():
     def ordenarMisCartas(self):
         if self.__mensajes:
             print (f"Mis cartas desordenadas: {self.__mis_cartas}")
-        #tope = len
+        
         for j in range(2):
             for i in range(2):
                 c = self.__mis_cartas[i]
@@ -610,36 +595,30 @@ clear()
 mazo_cartas = Mazo()
 truco = Truco(mazo_cartas)
 
-#truco.cortarMazo()
-#truco.mezclar(5)
-#truco.cortarMazo()
-
-#truco.listarCartas()
-
 a1 = Agente("Galileo",envido=False)
 a2 = Agente("Copernico",envido=True)
-truco.sumarJugador( a1 )
-truco.sumarJugador( a2 )
 
 # se considera solo dos jugadores
 # se toma el primer jugador que se agrego al juego como el jugador pie
-#truco.repartirCartas()
+truco.sumarJugador( a1 )
+truco.sumarJugador( a2 )
 
 # cantidad de partidas a jugar:
-#print(sys.argv[1])
-#N = int(sys.argv[1]) # en caso de desear ingresar el parametro por terminal
-N = 200
-if N>300:
-    N=300
+#N = 100
+N = int(sys.argv[1]) # en caso de desear ingresar el parametro por terminal
+t_inicio = time.time()
 
 cont_a1 = 0
 cont_a2 = 0
 for n in range(N):
-    print(n)
+    t1 = time.time()
     ganador = truco.jugarSimple()
     if ganador == a1.nombre:
         cont_a1 += 1
+    t2 = time.time()
+    print(n, f"Tiempo: {t2-t1}")
 
+t_fin = time.time()
 cont_a2 = N - cont_a1
 
 print("Resultados para N =",N)
