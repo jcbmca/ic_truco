@@ -9,6 +9,10 @@ version: 0.2
 
 import random
 import os
+import sys
+import time
+
+from scipy import rand
 
 def clear():
     _ = os.system(('clear','cls')[os.name == 'nt'])
@@ -59,7 +63,10 @@ class Mazo():
     
     # si el parametro _veces es None osea no se asigna toma el valor por defecto
     # si se asigna un valor 
-    def mezclar(self, _veces=None):
+    def mezclar(self):
+        random.shuffle(self.__cartas)
+
+    def mezclar2(self, _veces=None):
         n_cartas = len(self.__cartas)
         if _veces:
             _v = _veces
@@ -195,8 +202,9 @@ class Truco():
             return -10
     
     def mezclar(self, veces=None):
-        self.__mazo.mezclar(veces)
-        self.__mazo.mezclarSegunIndice(veces)
+        self.__mazo.mezclar()
+        #self.__mazo.mezclar(veces)
+        #self.__mazo.mezclarSegunIndice(veces)
     
     def cortarMazo(self):
         self.__mazo.cortar()
@@ -286,12 +294,12 @@ class Truco():
             self.repartirCartas()
 
             for n in range(3):
-                if n == -1:
-                    print("Cartas mano:",self.__jugadores[1].misCartas)
-                    print("Envido del mano: ",self.__jugadores[1].calcularEnvido())
+                #if n == -1:
+                #    print("Cartas mano:",self.__jugadores[1].misCartas)
+                #    print("Envido del mano: ",self.__jugadores[1].calcularEnvido())
 
-                    print("Cartas mano:",self.__jugadores[0].misCartas)
-                    print("Envido del pie: ",self.__jugadores[0].calcularEnvido())
+                #    print("Cartas mano:",self.__jugadores[0].misCartas)
+                #    print("Envido del pie: ",self.__jugadores[0].calcularEnvido())
                 
                 self.__jugadores[1].mirarMesa(tuple(self.__cartas_mesa))
                 carta_jugada = self.__jugadores[1].tirarCarta()
@@ -339,7 +347,7 @@ class Truco():
         self.__jugadores[0].reiniciarResultados()
         self.__jugadores[1].reiniciarResultados()
 
-        ganadorPartida = str
+        #ganadorPartida = str
         if self.__jugadores[0].puntos > self.__jugadores[1].puntos:
             ganadorPartida = self.__jugadores[0].nombre
         else:
@@ -491,16 +499,24 @@ class Agente():
                 indiceCarta=1 # elige la central si es quien arranca la partida
             # de lo contrario
             else:
+                # resulta que con esto se mejora la consistencia de los resultados
+                indiceCarta = -1
+
                 # si perdio o empato anteriormente trata de ganar la proxima
-                if ("D" in self.__resultados) or ("E" in self.__resultados): 
-                    indiceCarta = -1 # selecciona la mas alta
+                #if ("D" in self.__resultados) or ("E" in self.__resultados): 
+                #    indiceCarta = -1 # selecciona la mas alta
                 # de otro modo juega la mas chica
-                else:
-                    indiceCarta = 0
+                #else:
+                #    indiceCarta = 0
         # si es el segundo en tirar en esa ronda, selecciona la inmediata superior
         # para ganarla con lo minimo necesario
         else:
-            indiceCarta = self.inmediatoSuperior(cartasMesa[-1]) # elije la optima 
+            probabilidadJugarMayor = 0.5
+            nro = random.random()
+            if nro <= probabilidadJugarMayor:
+                indiceCarta = -1
+            else:
+                indiceCarta = self.inmediatoSuperior(cartasMesa[-1]) # elije la optima 
         
         self.__mi_proxima_jugada = indiceCarta
 
@@ -556,7 +572,12 @@ truco.sumarJugador( a2 )
 #truco.repartirCartas()
 
 # cantidad de partidas a jugar:
+#print(sys.argv[1])
+#N = int(sys.argv[1]) # en caso de desear ingresar el parametro por terminal
 N = 500
+if N>300:
+    N=300
+
 cont_a1 = 0
 cont_a2 = 0
 for n in range(N):
@@ -564,11 +585,17 @@ for n in range(N):
     ganador = truco.jugarSimple()
     if ganador == a1.nombre:
         cont_a1 += 1
-    else:
-        cont_a2 += 1
 
-print("Resultados para N = ",N)
-print("Victorias de {0}: {1} ( {2}% )".format( a1.nombre, cont_a1, cont_a1/N ))
-print("Victorias de {0}: {1} ( {2}% )".format( a2.nombre, cont_a2, cont_a2/N ))
+#for i in range(M):
+#    for n in range(N):
+#        print(n)
+#        ganador = truco.jugarSimple()
+#        if ganador == a1.nombre:
+#            cont_a1 += 1
+cont_a2 = N - cont_a1
+
+print("Resultados para N =",N)
+print("Victorias de {0}: {1} ( {2}% )".format( a1.nombre, cont_a1, 100*cont_a1/N ))
+print("Victorias de {0}: {1} ( {2}% )".format( a2.nombre, cont_a2, 100*cont_a2/N ))
 
 #truco.listarJugadores()
